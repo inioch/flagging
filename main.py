@@ -1,7 +1,6 @@
-import pandas as pd
+from openpyxl import load_workbook
 import tkinter as tk
 from tkinter import filedialog, messagebox
-import warnings
 from datetime  import datetime 
 import locale
 
@@ -73,16 +72,46 @@ class App:
         self.result_btn = tk.Button(root, text="Stwórz plombe", command=self.check_if_data_available)
         self.result_btn.pack(pady=10)
 
-        self.result_label = tk.Label(root, text="Wygenerowany seal:")
+        self.result_label = tk.Label(root, text="Wygenerowana plomba:")
         self.result_label.pack(pady=5)
 
         self.result_text = tk.Entry(root,width=50)
         self.result_text.pack(pady=5)
 
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
+        self.clipboard_button = tk.Button(root, text="Skopiuj do schowka", command=self.copy_to_clipboard)
+        self.clipboard_button.pack(pady=10)
+
+    def copy_to_clipboard(self):
+        value = self.result_text.get()
+        self.root.clipboard_clear()
+        self.root.clipboard_append(value)
+        self.root.update()
+
+        messagebox.showinfo("Skopiowano", "Plomba została skopiowana do schowka.")
+
+    def read_excel(self, file_path):
+        try:
+            wb = load_workbook(file_path, data_only=True)
+            ws = wb.active
+            products = set()
+
+            # znajdz numer kolumny
+            header = [cell.value for cell in ws[1]]
+            if "Product" not in header:
+                raise ValueError("Brak kolumny 'Product' w pliku Excel.")
+            
+            product_col = header.index("Product")
+
+            products = set()
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                if row[product_col]:
+                    products.add(str(row[product_col]))
+            return list(products)
         
+        except Exception as e:
+            messagebox.showerror("Błąd", f"Wystąpił nieoczekiwany błąd: {e}")
+            return []
     def toggle_batteries(self):
         if self.is_batteries == False:
             self.is_batteries = True
@@ -98,15 +127,18 @@ class App:
         self.seal_number.delete(0, tk.END)
         self.seal_number.insert(0, self.file_path)
 
-        try:
-            df = pd.read_excel(self.file_path, engine='openpyxl')
-            self.products = df["Product"].astype(str).unique()  # Konwersja na string + usunięcie duplikatów
-        except FileNotFoundError:
-            messagebox.showerror("Błąd", " Plik Excel nie został znaleziony.")
-        except KeyError:
-            messagebox.showerror("Błąd", " Kolumna 'Product' nie istnieje w pliku Excel. Napewno wybrałeś odpowiedni plik?")
-        except Exception as e:
-            messagebox.showerror("Błąd", f"Wystąpił nieoczekiwany błąd: {e}")
+        self.products = self.read_excel(self.file_path)
+        if not self.products:
+            messagebox.showerror("Błąd", "Nie znaleziono danych w pliku Excel.")
+        # try:
+        #     df = read_excel(self.file_path, engine='openpyxl')
+        #     self.products = df["Product"].astype(str).unique()  # Konwersja na string + usunięcie duplikatów
+        # except FileNotFoundError:
+        #     messagebox.showerror("Błąd", " Plik Excel nie został znaleziony.")
+        # except KeyError:
+        #     messagebox.showerror("Błąd", " Kolumna 'Product' nie istnieje w pliku Excel. Napewno wybrałeś odpowiedni plik?")
+        # except Exception as e:
+        #     messagebox.showerror("Błąd", f"Wystąpił nieoczekiwany błąd: {e}")
 
     def check_if_data_available(self):
         if self.file_path:
