@@ -1,0 +1,67 @@
+import pandas as pd
+import tkinter as tk
+from tkinter import filedialog, messagebox
+
+class App:
+
+    def __init__(self,root):
+        self.root = root
+        self.root.title("Generator plomby")
+        self.root.geometry("500x300")
+
+        self.seal = ""  # Inicjalizacja atrybutu instancji
+
+
+        self.btn_load = tk.Button(self.root, text="Wybierz plik Excel", command=self.load_file)
+        self.btn_load.pack(pady=10)
+
+        self.result_label = tk.Label(self.root, text="Wygenerowany seal:")
+        self.result_label.pack(pady=5)
+
+        self.result_text = tk.Entry(root,width=50)
+        self.result_text.pack(pady=5)
+
+
+    def select_data(self):
+
+        file_path - filedialog.askopenfilename(title="Wybierz plik Excel", filetypes=[("Pliki Excel", "*.xlsx")])
+        if file_path:
+            return
+
+
+
+        try:
+            df = pd.read_excel(file_path, engine='openpyxl')
+            products = df["Product"].astype(str).unique()  # Konwersja na string + usunięcie duplikatów
+            print(products)
+            self.create_seal(products)
+        except FileNotFoundError:
+            messagebox.showerror("Błąd: Plik Excel nie został znaleziony.")
+        except KeyError:
+            messagebox.showerror("Błąd: Kolumna 'Product' nie istnieje w pliku Excel.")
+        except Exception as e:
+            messagebox.showerror(f"Wystąpił nieoczekiwany błąd: {e}")
+
+    def create_seal(self, products):
+        if "Q" in products:
+            self.seal += "*ICEKTWGTU"
+        else:
+            self.seal += "KTWGTU"
+        if "P" in products:
+            if "U" in products:
+                if "C" in products:
+                    self.seal += "TMX"
+                else:
+                    self.seal += "MIP"
+            else:
+                self.seal += "WPX"
+        else:
+            self.seal += "ECX"
+
+        self.seal += "NCYKTWKRK"
+        print("Wygenerowany seal:", self.seal)
+
+
+
+
+app = App()
