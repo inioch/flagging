@@ -130,15 +130,6 @@ class App:
         self.products = self.read_excel(self.file_path)
         if not self.products:
             messagebox.showerror("Błąd", "Nie znaleziono danych w pliku Excel.")
-        # try:
-        #     df = read_excel(self.file_path, engine='openpyxl')
-        #     self.products = df["Product"].astype(str).unique()  # Konwersja na string + usunięcie duplikatów
-        # except FileNotFoundError:
-        #     messagebox.showerror("Błąd", " Plik Excel nie został znaleziony.")
-        # except KeyError:
-        #     messagebox.showerror("Błąd", " Kolumna 'Product' nie istnieje w pliku Excel. Napewno wybrałeś odpowiedni plik?")
-        # except Exception as e:
-        #     messagebox.showerror("Błąd", f"Wystąpił nieoczekiwany błąd: {e}")
 
     def check_if_data_available(self):
         if self.file_path:
@@ -150,31 +141,40 @@ class App:
 
         if "Q" in self.products:
             seal_parts.append("*ICE")
-        if self.type_of_batteries.get() == 2:
+
+        battery_type = self.type_of_batteries.get() if self.type_of_batteries else 0
+        if battery_type == 2:
             seal_parts.append("RLI")
-        if self.type_of_batteries.get() == 3:
+        elif battery_type == 3:
             seal_parts.append("RLM")
-        if self.saturday.get() == True:
+
+        if self.saturday.get():
             seal_parts.append("DD6")
 
-        if "W" in self.products and "I" in self.products:
+        seal_parts.append("KTWGTU")
+
+        if "W" in self.products and "H" in self.products:
             seal_parts.append("DDI")
-        elif "I" in self.products:
+        elif "H" in self.products:
             seal_parts.append("ESI")
         elif "W" in self.products:
             seal_parts.append("ESU")
+
         if "P" in self.products and "U" in self.products and "C" in self.products:
             seal_parts.append("TMX")
         elif "C" in self.products:
             seal_parts.append("CMX")
-        elif "Q" in self.products:
-            seal_parts.append("WMX")
         elif "P" in self.products and "U" in self.products:
             seal_parts.append("MIP")
-        elif "P" in self.products and "C" in self.products or "P" in self.products and "Q" in self.products:
-            seal_parts.append("TMX")
-        elif "U" in self.products and "C" in self.products or "U" in self.products and "Q" in self.products:
-            seal_parts.append("TMX")
+        elif "Q" in self.products:
+            seal_parts.append("WMX")
+        elif "Y" in self.products or "TDM" in self.products or "TDL" in self.products or "T" in self.products or "TDE" in self.products:
+            if "Q" in self.products or "C" in self.products:
+                seal_parts.append("TMX")
+            else:
+                seal_parts.append("T09")
+        elif "D" in self.products:
+            seal_parts.append("DOX")
         elif "P" in self.products:
             seal_parts.append("WPX")
         elif "U" in self.products:
