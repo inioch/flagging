@@ -20,7 +20,6 @@ class App:
         locale.setlocale(locale.LC_ALL, 'pl_PL.UTF-8')
         self.name_of_day = datetime.today().strftime('%A')
 
-
 # wczytywanie pliku
         self.btn_load = tk.Button(root, text="Wybierz plik Excel", command=self.select_data)
         self.btn_load.pack(pady=10)
@@ -45,6 +44,7 @@ class App:
         self.radio_bat3.pack()
 # Sprawdzenie suchego lodu poprzez zawartość
         self.is_dry_ice = False
+        self.is_t09 = False
 # typ auta
         self.car_label = tk.Label(root, text="Wybierz typ auta:")
         self.car_label.pack(pady=5)
@@ -58,7 +58,7 @@ class App:
         self.r3 = tk.Radiobutton(root, text="CNY", variable=self.car_type, value= 3)
         self.r3.pack()
 
-# dodanie opbsugi sobota
+# dodanie obslugi sobota
         self.saturday = tk.IntVar()
 
         self.saturday_label = tk.Label(root, text="Czy są paczki na sobotę?")
@@ -106,6 +106,8 @@ class App:
 
             content_col = header.index("Content")
 
+            t09_col = header.index("Prod Type")
+
             for row in ws.iter_rows(min_row=2, values_only=True):
                 if row[product_col]:
                     products.add(str(row[product_col]))
@@ -121,7 +123,13 @@ class App:
                     self.is_dry_ice = True
                     break
                 else:
-                    self.is_dry_ice = False    
+                    self.is_dry_ice = False  
+
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                if row == "Pre-09":
+                    self.is_t09 = True
+                else:
+                    self.is_t09 = False
             
             return list(products)
             
@@ -186,7 +194,10 @@ class App:
             else:
                 seal_parts.append("WMX")
         elif "Y" in self.products or "T" in self.products or "K" in self.products:
-            seal_parts.append("T09")
+            if self.is_t09 == True:
+                seal_parts.append("T09")
+            else:
+                seal_parts.append("T12")
         elif "C" in self.products:
             seal_parts.append("CMX")
         elif "Q" in self.products:
