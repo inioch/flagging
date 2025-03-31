@@ -30,18 +30,7 @@ class App:
 
         self.seal_number = tk.Entry(root,width=50, fg="blue")
         self.seal_number.pack(pady=5)
-# czy są baterie?
 
-        self.bateries_lit_ion = tk.IntVar()
-        self.bateries_lit_met = tk.IntVar()
-
-
-        self.label_bat = tk.Label(root, text="Załadowane baterie?")
-        self.label_bat.pack()
-        self.radio_bat2 = tk.Checkbutton(root, text="LIT-ION", variable=self.bateries_lit_ion, onvalue=True, offvalue=False)
-        self.radio_bat2.pack()
-        self.radio_bat3 = tk.Checkbutton(root, text="LIT-MET", variable=self.bateries_lit_met, onvalue=True, offvalue=False)
-        self.radio_bat3.pack()
 # Sprawdzenie suchego lodu poprzez zawartość
         self.is_dry_ice = False
         self.is_t09 = False
@@ -126,21 +115,20 @@ class App:
                     self.is_dry_ice = False  
 
             for row in ws.iter_rows(min_row=2, values_only=True):
-                if row == "Pre-09":
+                tdt_col = row[t09_col]
+                if tdt_col and "Pre-9" in row or tdt_col and "Pre-9" in row:
                     self.is_t09 = True
+                    break
                 else:
                     self.is_t09 = False
+
             
             return list(products)
             
         except Exception as e:
             messagebox.showerror("Błąd", f"Wystąpił nieoczekiwany błąd: {e}")
             return []
-    def toggle_batteries(self):
-        if self.is_batteries == False:
-            self.is_batteries = True
-        else:    
-            self.is_batteries = False
+
     def select_data(self):
         self.file_path = filedialog.askopenfilename(title="Wybierz plik Excel", filetypes=[("Pliki Excel", "*.xlsx")])
         if not self.file_path:
@@ -164,16 +152,7 @@ class App:
 # sprawdza po zawartości czy są lody
 
         if self.is_dry_ice:
-# baterie
-            if self.bateries_lit_met.get() and self.bateries_lit_ion.get():
-                seal_parts.append("*ICERLIRLM")
-            elif self.bateries_lit_met.get():
-                seal_parts.append("*ICERLM")
-            elif self.bateries_lit_ion.get():
-                seal_parts.append("*ICERLI")
-            else:
-                seal_parts.append("*ICE")
-
+            seal_parts.append("*ICE")
 # soboty
         if self.saturday.get():
             seal_parts.append("DD6") 
@@ -186,24 +165,18 @@ class App:
             seal_parts.append("ESI")
         elif "W" in self.products:
             seal_parts.append("ESU")
-
 # terminowki
+# Pierwsza część - specjalne oznaczenia
         if "C" in self.products and "Q" in self.products:
-            if "Y" in self.products or "T" in self.products or "K" in self.products:
-                seal_parts.append("TMX")
-            else:
-                seal_parts.append("WMX")
-        elif "Y" in self.products or "T" in self.products or "K" in self.products:
-            if self.is_t09 == True:
-                seal_parts.append("T09")
-            else:
-                seal_parts.append("T12")
+            seal_parts.append("TMX" if any(x in self.products for x in ["Y", "T", "K"]) else "WMX")
+        elif any(x in self.products for x in ["Y", "T", "K"]):
+            seal_parts.append("T09" if self.is_t09 else "T12")
         elif "C" in self.products:
             seal_parts.append("CMX")
         elif "Q" in self.products:
             seal_parts.append("WMX")
-# zwykle paczki
 
+        # Druga część - zwykłe paczki
         if "P" in self.products and "U" in self.products:
             seal_parts.append("MIP")
         elif "P" in self.products:
@@ -212,8 +185,8 @@ class App:
             seal_parts.append("ECX")
         elif "D" in self.products:
             seal_parts.append("DOX")
- 
-
+    
+# TYP AUTA
 
         match self.car_type.get():
             case 1:
@@ -225,14 +198,13 @@ class App:
         seal_parts.append("ORGKRK")
         self.seal = "".join(seal_parts)
 
+# CZYSCZENIE ZA DLUGIEGO STRING
 
         if self.car_type.get() != 0:
             if len(self.seal) > 29:
                 self.seal = self.seal[:-6]
             self.result_text.delete(0, tk.END)
             self.result_text.insert(0, self.seal)
-            if self.type_of_batteries.get() == 1:
-                messagebox.showwarning("Nie wybrano baterii"," Zaleca sie wybranie baterii. Jesli są załadowane.")
             if self.saturday.get() == False and self.dzis in(3,4) :
                 messagebox.showwarning("Sobota?",f"Dzisiaj {self.name_of_day}. Sprawdź czy nie są załadowane paczki na sobotę!")
         else:
